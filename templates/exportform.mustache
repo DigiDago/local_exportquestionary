@@ -1,0 +1,16 @@
+<div class="exportform">
+    <div class="form-group">
+        <select name="templatetitle" id="templatetitle" class="form-control">
+            {{#templatequestionary}}
+                <option value="{{title}}">{{title}}</option>
+            {{/templatequestionary}}
+        </select>
+    </div>
+    <!--<div class="form-group">-->
+    <!--<label for="startdate">Sélectionner une date de début</label>-->
+    <!--<input type="text" class="datepicker form-control" name="startdate">-->
+    <!--<label for="enddate">Sélectionner une date de fin</label>-->
+    <!--<input type="text" class="datepicker form-control" name="enddate">-->
+    <!--</div>-->
+    <button class="exportcsv btn btn-primary">Exporter</button>
+</div>
