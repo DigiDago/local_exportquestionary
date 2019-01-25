@@ -412,12 +412,25 @@ class exportquestionnaire extends questionnaire {
                 )
             ) > 0) {
             $choiceparams  = [ $this->survey->id ];
-            $choicesql     = "
-                SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
-                  FROM {questionnaire_question} q
-                  JOIN {questionnaire_quest_choice} c ON question_id = q.id
-                 WHERE q.surveyid = ? ORDER BY cid ASC
-            ";
+
+            $version = get_config('local_exportquestionary', 'version');
+            
+            if ($version < '2018050107') {
+                $choicesql     = "
+                    SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
+                      FROM {questionnaire_question} q
+                      JOIN {questionnaire_quest_choice} c ON question_id = q.id
+                     WHERE q.survey_id = ? ORDER BY cid ASC
+                ";
+            } else {
+                $choicesql     = "
+                    SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
+                      FROM {questionnaire_question} q
+                      JOIN {questionnaire_quest_choice} c ON question_id = q.id
+                     WHERE q.surveyid = ? ORDER BY cid ASC
+                ";
+            }
+
             $choicerecords = $DB->get_records_sql(
                 $choicesql,
                 $choiceparams
