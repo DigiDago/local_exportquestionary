@@ -73,7 +73,7 @@ class local_exportquestionary_external extends external_api {
           FROM {questionnaire_survey} qs 
           LEFT JOIN {questionnaire} q 
             ON qs.id = q.id
-          WHERE qs.title = '" . $params['title'] . "'
+          WHERE ( qs.title = '" . $params['title'] . "' OR q.name = '" . $params['title'] . "' )
             AND qs.realm != 'template'"
         );
 
