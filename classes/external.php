@@ -68,13 +68,13 @@ class local_exportquestionary_external extends external_api {
 
         // Selected template name
         $questionarys = $DB->get_records_sql(
-            "SELECT 
+            'SELECT 
             * 
           FROM {questionnaire_survey} qs 
           LEFT JOIN {questionnaire} q 
             ON qs.id = q.id
-          WHERE ( qs.title = '" . $params['title'] . "' OR q.name = '" . $params['title'] . "' )
-            AND qs.realm != 'template'"
+          WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
+          AND qs.realm != "template"'
         );
 
         $csv = [];
