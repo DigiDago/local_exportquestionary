@@ -58,10 +58,6 @@ $PAGE->set_heading(
     )
 );
 
-$templatesurveys = $DB->get_records(
-    'questionnaire_survey',
-    [ 'realm' => 'template' ]
-);
 $PAGE->requires->css('/local/exportquestionary/assets/css/jquery-ui.min.css');
 $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportquestionary.js'));
 
@@ -69,9 +65,9 @@ $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportque
 $templatequestionary = $DB->get_records_sql(
     "SELECT 
             * 
-          FROM {questionnaire_survey} qs 
-          LEFT JOIN {questionnaire} q 
-            ON qs.id = q.id 
+          FROM mdl_questionnaire_survey qs 
+          LEFT JOIN mdl_questionnaire q 
+          ON qs.id = q.sid 
           WHERE  qs.realm = 'template'"
 );
 
