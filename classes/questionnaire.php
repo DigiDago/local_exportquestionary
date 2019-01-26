@@ -87,7 +87,7 @@ class exportquestionnaire extends questionnaire {
         // Get the course name that this questionnaire belongs to.
         $ispublic = null;
 
-        $version = get_config('local_exportquestionary', 'version');
+        $version = get_config('mod_exportquestionary', 'version');
 
         if ($version < '2018050107') {
             $ispublic = $this->survey->realm == 'public';
@@ -422,7 +422,7 @@ class exportquestionnaire extends questionnaire {
             ) > 0) {
             $choiceparams  = [ $this->survey->id ];
 
-            $version = get_config('local_exportquestionary', 'version');
+            $version = get_config('mod_exportquestionary', 'version');
 
             if ($version < '2018050107') {
                 $choicesql     = "
