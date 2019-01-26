@@ -85,7 +85,16 @@ class exportquestionnaire extends questionnaire {
 
         // Moodle:
         // Get the course name that this questionnaire belongs to.
-        if (!$this->survey_is_public()) {
+        $ispublic = null;
+
+        $version = get_config('local_exportquestionary', 'version');
+
+        if ($version < '2018050107') {
+            $ispublic = $this->survey->realm == 'public';
+        } else {
+            $ispublic = $this->survey_is_public();
+        }
+        if (!$ispublic) {
             $courseid      = $this->course->id;
             $coursename    = $this->course->fullname . ' - ' . $this->course->shortname;
             $coursesummary = $this->course->summary;
@@ -414,7 +423,7 @@ class exportquestionnaire extends questionnaire {
             $choiceparams  = [ $this->survey->id ];
 
             $version = get_config('local_exportquestionary', 'version');
-            
+
             if ($version < '2018050107') {
                 $choicesql     = "
                     SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
