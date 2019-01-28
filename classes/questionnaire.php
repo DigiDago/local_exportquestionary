@@ -54,7 +54,7 @@ class exportquestionnaire extends questionnaire {
                 'questionnaire',
                 'downloadoptions'
             );
-            $replace = 'course,summary,category,';
+            $replace = 'course,shortname,summary,category,';
             $find    = 'course,';
             $pos     = strpos(
                 $config,
@@ -89,14 +89,15 @@ class exportquestionnaire extends questionnaire {
 
         $version = get_config('mod_questionnaire', 'version');
 
-        if ($version < '2018050107') {
+        if ($version < '2018050100') {
             $ispublic = $this->survey->realm == 'public';
         } else {
             $ispublic = $this->survey_is_public();
         }
         if (!$ispublic) {
             $courseid      = $this->course->id;
-            $coursename    = $this->course->fullname . ' - ' . $this->course->shortname;
+            $coursename    = $this->course->fullname;
+            $shortname    = $this->course->shortname;
             $coursesummary = $this->course->summary;
             $coursecat     = $DB->get_record(
                 'course_categories',
@@ -113,12 +114,14 @@ class exportquestionnaire extends questionnaire {
                 ]
             )) {
                 $courseid      = $record->course;
-                $coursename    = $record->fullname . ' - ' . $record->shortname;
+                $coursename    = $record->fullname;
+                $shortname    = $record->shortname;
                 $coursesummary = $record->summary;
                 $coursecat     = $record->coursecat;
             } else {
                 $courseid      = $this->course->id;
-                $coursename    = $this->course->fullname . ' - ' . $this->course->shortname;
+                $coursename    = $this->course->fullname;
+                $shortname    = $this->course->shortname;
                 $coursesummary = $this->course->summary;
                 $coursecat     = $this->course->coursecat;
             }
@@ -225,6 +228,15 @@ class exportquestionnaire extends questionnaire {
             );
         }
         if (in_array(
+            'shortname',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $shortname
+            );
+        }
+        if (in_array(
             'summary',
             $options
         )) {
@@ -323,7 +335,7 @@ class exportquestionnaire extends questionnaire {
             'questionnaire',
             'downloadoptions'
         );
-        $replace = 'course,summary,category,';
+        $replace = 'course,shortname,summary,category,';
         $find    = 'course,';
         $pos     = strpos(
             $config,
@@ -424,7 +436,7 @@ class exportquestionnaire extends questionnaire {
 
             $version = get_config('mod_questionnaire', 'version');
 
-            if ($version < '2018050107') {
+            if ($version < '2018050100') {
                 $choicesql     = "
                     SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
                       FROM {questionnaire_question} q
