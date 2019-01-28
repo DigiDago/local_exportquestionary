@@ -102,7 +102,7 @@ class exportquestionnaire extends questionnaire {
             $coursecat     = $DB->get_record(
                 'course_categories',
                 [ 'id' => $this->course->category ]
-            )->name;
+            );
         } else {
             // For a public questionnaire, look for the course that used it.
             $sql = 'SELECT q.id, q.course, c.fullname, c.summary , cc.name as coursecat' . 'FROM {questionnaire_response} qr ' . 'INNER JOIN {questionnaire} q ON qr.questionnaireid = q.id ' . 'INNER JOIN {course} c ON q.course = c.id ' . 'INNER JOIN {course_categories} cc ON c.category = cc.id ' . 'WHERE qr.id = ? AND qr.complete = ? ';
@@ -125,6 +125,17 @@ class exportquestionnaire extends questionnaire {
                 $coursesummary = $this->course->summary;
                 $coursecat     = $this->course->coursecat;
             }
+        }
+
+        $coursecatpath = explode('/', $coursecat->path);
+        if ($coursecatpath[2]) {
+            $coursecatparent     = $DB->get_record(
+                'course_categories',
+                [ 'id' => $coursecatpath[2] ]
+            );
+            $coursecat = $coursecatparent->name;
+        } else {
+            $coursecat = $coursecat->name;
         }
 
         // Moodle:
