@@ -31,24 +31,15 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
                     title: title,
                 },
                 done: function (response) {
-                    var csv = convertArrayOfObjectsToCSV(response);
-                    if (csv == null) return;
-                    var date = new Date();
-                    var year = date.getFullYear().toString();
-                    var month = (date.getMonth() + 1).toString(); // getMonth() is zero-based
-                    var day = date.getDate().toString();
-                    var date = '_' + day + '_' + month + '_' + year;
-                    var filename = response.name + date + '.csv';
+                    let date = new Date();
+                    let year = date.getFullYear().toString();
+                    let month = (date.getMonth() + 1).toString(); // getMonth() is zero-based
+                    let day = date.getDate().toString();
+                    date = '_' + day + '_' + month + '_' + year;
+                    let filename = response.name + date + '.csv';
 
-                    if (!csv.match(/^data:text\/csv/i)) {
-                        csv = 'data:text/csv;charset=utf-8,' + csv;
-                    }
-                    data = encodeURI(csv);
+                    exportToCsv(filename ,response.data);
 
-                    link = document.createElement('a');
-                    link.setAttribute('href', data);
-                    link.setAttribute('download', filename);
-                    link.click();
                 },
                 fail: function (response) {
                 }
@@ -57,30 +48,43 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
     });
 });
 
-function convertArrayOfObjectsToCSV(args) {
-    let result, ctr, keys, columnDelimiter, lineDelimiter, data;
-    data = args.data || null;
-    if (data == null || !data.length) {
-        return null;
+function exportToCsv(filename, rows) {
+    var processRow = function (row) {
+        var finalVal = '';
+        for (var j = 0; j < row.length; j++) {
+            var innerValue = row[j] === null ? '' : row[j].toString();
+            if (row[j] instanceof Date) {
+                innerValue = row[j].toLocaleString();
+            };
+            var result = innerValue.replace(/"/g, '""');
+            if (result.search(/("|,|\n)/g) >= 0)
+                result = '"' + result + '"';
+            if (j > 0)
+                finalVal += ',';
+            finalVal += result;
+        }
+        return finalVal + '\n';
+    };
+
+    var csvFile = '';
+    for (var i = 0; i < rows.length; i++) {
+        csvFile += processRow(rows[i]);
     }
-    columnDelimiter = ';';
-    lineDelimiter = '\n';
-    //Get 1st item to find field label
-    keys = Object.keys(data[0]);
-    result = '';
-    data.forEach(function (item) {
-        ctr = 0;
-        keys.forEach(function (key) {
-            if (ctr > 0) result += columnDelimiter;
-            if (item[key] && item[key].visitnbre != undefined) {
-                result += item[key].visitnbre;
-            }
-            else {
-                result += '\"' + item[key] + '\"';
-            }
-            ctr++;
-        });
-        result += lineDelimiter;
-    });
-    return result;
+
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+            // Browsers that support HTML5 download attribute
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
 }
