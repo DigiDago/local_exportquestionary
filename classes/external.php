@@ -104,10 +104,7 @@ class local_exportquestionary_external extends external_api {
                     null
                 );
                 // Use the questionary name as the file name. Clean it and change any non-filename characters to '_'.
-                $name = clean_param(
-                    $questionary->title,
-                    PARAM_FILE
-                );
+                $name = "export_questionnaire";
                 $name = preg_replace(
                     "/[^A-Z0-9]+/i",
                     "_",
