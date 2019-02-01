@@ -58,6 +58,7 @@ function exportToCsv(filename, rows) {
             };
             let result = innerValue.replace(/"/g, '""');
             result = result.replace(/&nbsp;/g, ' ');
+            result = strip(result);
             if (result.search(/("|,|\n)/g) >= 0)
                 result = '"' + result + '"';
             if (j > 0)
@@ -88,4 +89,11 @@ function exportToCsv(filename, rows) {
             document.body.removeChild(link);
         }
     }
+}
+
+function strip(html)
+{
+    var tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
 }
