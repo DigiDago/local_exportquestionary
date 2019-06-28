@@ -22,11 +22,35 @@
 
 require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
     $(".datepicker").datepicker();
-    $(".exportcsv").on('click', function (e) {
+    $(".exportcsvresponses").on('click', function (e) {
         let title = $('#templatetitle').val();
         ajax.call([
             {
-                methodname: "local_exportquestionary_exportcsv",
+                methodname: "local_exportquestionary_exportcsvresponses",
+                args: {
+                    title: title,
+                },
+                done: function (response) {
+                    let date = new Date();
+                    let year = date.getFullYear().toString();
+                    let month = (date.getMonth() + 1).toString(); // getMonth() is zero-based
+                    let day = date.getDate().toString();
+                    date = '_' + day + '_' + month + '_' + year;
+                    let filename = response.name + date + '.csv';
+
+                    exportToCsv(filename ,response.data);
+
+                },
+                fail: function (response) {
+                }
+            }
+        ], true, true);
+    });
+    $(".exportcsvreport").on('click', function (e) {
+        let title = $('#templatetitle').val();
+        ajax.call([
+            {
+                methodname: "local_exportquestionary_exportcsvreport",
                 args: {
                     title: title,
                 },

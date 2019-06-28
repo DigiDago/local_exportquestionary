@@ -26,3 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Export questionary';
 $string['exportall']  = 'Export all questionary';
+$string['responsenumber']  = 'Nombre de réponses';
+$string['studentnumber']  = 'Nombre d\'étudiants';
+$string['returnnumber']  = 'Taux de retour';

@@ -24,7 +24,7 @@
 
 require( '../../config.php' );
 
-require_once( $CFG->dirroot . '/mod/questionnaire/locallib.php' );
+require_once( $CFG->dirroot . '/mod/pimenkoquestionnaire/locallib.php' );
 
 global $DB, $OUTPUT;
 
@@ -65,8 +65,8 @@ $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportque
 $templatequestionary = $DB->get_records_sql(
     "SELECT 
             * 
-          FROM mdl_questionnaire_survey qs 
-          LEFT JOIN mdl_questionnaire q 
+          FROM {pimenkoquestionnaire_survey} qs 
+          LEFT JOIN {pimenkoquestionnaire} q 
           ON qs.id = q.sid 
           WHERE  qs.realm = 'template'"
 );

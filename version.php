@@ -25,9 +25,9 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'local_exportquestionary';
 $plugin->release      = '0.1.1';
-$plugin->version      = 2019011801;
+$plugin->version      = 2019011805;
 $plugin->requires     = 2017111300;
 $plugin->maturity     = MATURITY_ALPHA;
 $plugin->dependencies = [
-    'mod_questionnaire' => ANY_VERSION
+    'mod_pimenkoquestionnaire' => ANY_VERSION
 ];

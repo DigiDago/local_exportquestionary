@@ -24,21 +24,34 @@
 
 // We defined the web service functions to install.
 $functions = [
-    'local_exportquestionary_exportcsv' => [
-        'classname'   => 'local_exportquestionary_external',
-        'methodname'  => 'exportcsv',
-        'classpath'   => 'local/exportquestionary/classes/external.php',
-        'description' => 'return csv file',
-        'type'        => 'read',
-        'ajax'        => true
-    ]
+        'local_exportquestionary_exportcsvresponses' => [
+                'classname' => 'local_exportquestionary_external',
+                'methodname' => 'exportcsvresponses',
+                'classpath' => 'local/exportquestionary/classes/external.php',
+                'description' => 'return csv file responses',
+                'type' => 'read',
+                'ajax' => true
+        ],
+        'local_exportquestionary_exportcsvreport' => [
+                'classname' => 'local_exportquestionary_external',
+                'methodname' => 'exportcsvreport',
+                'classpath' => 'local/exportquestionary/classes/external.php',
+                'description' => 'return csv file general report',
+                'type' => 'read',
+                'ajax' => true
+        ]
 ];
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
 $services = [
-    'Return a csv file' => [
-        'functions'       => [ 'local_exportquestionary_exportcsv' ],
-        'restrictedusers' => 0,
-        'enabled'         => 1
-    ]
+        'Return a csv file' => [
+                'functions' => ['local_exportquestionary_exportcsvresponses'],
+                'restrictedusers' => 0,
+                'enabled' => 1
+        ],
+        'Return csv file general report' => [
+                'functions' => ['local_exportquestionary_exportcsvreport'],
+                'restrictedusers' => 0,
+                'enabled' => 1
+        ]
 ];
