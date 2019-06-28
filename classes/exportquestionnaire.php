@@ -553,7 +553,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                         foreach ($choices as $choice) {
                             $content = $choice->content;
                             $modality = '';
-                            $contents = questionnaire_choice_values($content);
+                            $contents = pimenkoquestionnaire_choice_values($content);
                             if ($contents->modname) {
                                 $modality = $contents->modname;
                             } else if ($contents->title) {
@@ -610,11 +610,11 @@ class exportquestionnaire extends pimenkoquestionnaire {
                                             ),
                                             [' ']
                                     );
-                                    $contents = questionnaire_choice_values($contentleft);
+                                    $contents = pimenkoquestionnaire_choice_values($contentleft);
                                     if ($contents->title) {
                                         $contentleft = $contents->title;
                                     }
-                                    $contents = questionnaire_choice_values($contentright);
+                                    $contents = pimenkoquestionnaire_choice_values($contentright);
                                     if ($contents->title) {
                                         $contentright = $contents->title;
                                     }
@@ -625,7 +625,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                                             $modality
                                     );
                                 } else {
-                                    $contents = questionnaire_choice_values($content);
+                                    $contents = pimenkoquestionnaire_choice_values($content);
                                     if ($contents->modname) {
                                         $modality = $contents->modname;
                                     } else if ($contents->title) {
