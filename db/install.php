@@ -16,6 +16,7 @@
 
 /**
  * Code to be executed after the plugin's database scheme has been installed is defined here.
+ *
  * @package     local_exportquestionary
  * @category    upgrade
  * @copyright   Pimenko 2019
@@ -28,6 +29,5 @@ defined('MOODLE_INTERNAL') || die();
  * Custom code to be run on installing the plugin.
  */
 function xmldb_local_exportquestionary_install() {
-
     return true;
 }

@@ -20,17 +20,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
+require(["core/ajax", "jquery", "jqueryui"], function(ajax, $) {
     $(".datepicker").datepicker();
-    $(".exportcsvresponses").on('click', function (e) {
-        let title = $('#templatetitle').val();
+    $(".exportcsvresponses").on('click', function() {
         ajax.call([
             {
                 methodname: "local_exportquestionary_exportcsvresponses",
                 args: {
-                    title: title,
+                    title: $('#templatetitle').val(),
                 },
-                done: function (response) {
+                done: function(response) {
                     let date = new Date();
                     let year = date.getFullYear().toString();
                     let month = (date.getMonth() + 1).toString(); // getMonth() is zero-based
@@ -38,15 +37,15 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
                     date = '_' + day + '_' + month + '_' + year;
                     let filename = response.name + date + '.csv';
 
-                    exportToCsv(filename ,response.data);
+                    exportToCsv(filename, response.data);
 
                 },
-                fail: function (response) {
+                fail: function(response) {
                 }
             }
         ], true, true);
     });
-    $(".exportcsvreport").on('click', function (e) {
+    $(".exportcsvreport").on('click', function() {
         let title = $('#templatetitle').val();
         ajax.call([
             {
@@ -54,7 +53,7 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
                 args: {
                     title: title,
                 },
-                done: function (response) {
+                done: function(response) {
                     let date = new Date();
                     let year = date.getFullYear().toString();
                     let month = (date.getMonth() + 1).toString(); // getMonth() is zero-based
@@ -62,10 +61,10 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
                     date = '_' + day + '_' + month + '_' + year;
                     let filename = response.name + date + '.csv';
 
-                    exportToCsv(filename ,response.data);
+                    exportToCsv(filename, response.data);
 
                 },
-                fail: function (response) {
+                fail: function(response) {
                 }
             }
         ], true, true);
@@ -73,17 +72,17 @@ require(["core/ajax", "jquery", "jqueryui"], function (ajax, $) {
 });
 
 function exportToCsv(filename, rows) {
-    let processRow = function (row) {
+    let processRow = function(row) {
         let finalVal = '';
         for (let j = 0; j < row.length; j++) {
             let innerValue = row[j] === null ? '' : row[j].toString();
             if (row[j] instanceof Date) {
                 innerValue = row[j].toLocaleString();
-            };
+            }
             let result = innerValue.replace(/"/g, '""');
             result = result.replace(/&nbsp;/g, ' ');
             result = strip(result);
-            if (result.search(/("|,|\n)/g) >= 0)
+            if (result.search(/([",\n])/g) >= 0)
                 result = '"' + result + '"';
             if (j > 0)
                 finalVal += ',';
@@ -93,11 +92,11 @@ function exportToCsv(filename, rows) {
     };
 
     let csvFile = '';
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         csvFile += processRow(rows[i]);
     }
 
-    let blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    let blob = new Blob([csvFile], {type: 'text/csv;charset=utf-8;'});
     if (navigator.msSaveBlob) { // IE 10+
         navigator.msSaveBlob(blob, filename);
     } else {
@@ -115,9 +114,8 @@ function exportToCsv(filename, rows) {
     }
 }
 
-function strip(html)
-{
-    var tmp = document.createElement("DIV");
+function strip(html) {
+    let tmp = document.createElement("DIV");
     tmp.innerHTML = html;
     return tmp.textContent || tmp.innerText || "";
 }

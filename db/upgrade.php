@@ -23,7 +23,7 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once( __DIR__ . '/upgradelib.php' );
+require_once(__DIR__ . '/upgradelib.php');
 
 /**
  * Execute local_exportquestionary upgrade from the given old version.
@@ -32,7 +32,7 @@ require_once( __DIR__ . '/upgradelib.php' );
  *
  * @return bool
  */
-function xmldb_local_exportquestionary_upgrade($oldversion) {
+function xmldb_local_exportquestionary_upgrade( $oldversion ) {
     global $DB;
 
     $dbman = $DB->get_manager();

@@ -25,16 +25,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 $ADMIN->add(
-    'reports',
-    new admin_externalpage(
-        'questionary_all_export',
-        get_string(
-            'exportall',
-            'local_exportquestionary'
-        ),
-        $CFG->wwwroot . '/local/exportquestionary/exportall.php',
-        'local/exportquestionary:exportall'
-    )
+        'reports',
+        new admin_externalpage(
+                'questionary_all_export',
+                get_string(
+                        'exportall',
+                        'local_exportquestionary'
+                ),
+                $CFG->wwwroot . '/local/exportquestionary/exportall.php',
+                'local/exportquestionary:exportall'
+        )
 );
 
 $settings = null;

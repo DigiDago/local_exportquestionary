@@ -42,10 +42,10 @@ class exportquestionnaire extends pimenkoquestionnaire {
      * @throws coding_exception
      * @throws dml_exception
      */
-    protected function process_csv_row(
+    final public function process_csv_row(
             array &$row, stdClass $resprow, $currentgroupid, array &$questionsbyposition, $nbinfocols, $numrespcols,
             $showincompletes = 0
-    ) {
+    ): array {
         global $DB;
 
         static $config = null;
@@ -144,52 +144,52 @@ class exportquestionnaire extends pimenkoquestionnaire {
         } else {
             $coursecat = $coursecat->name;
         }
-            // Moodle:
-            // Determine if the user is a member of a group in this course or not.
-            // TODO - review for performance.
-            $groupname = '';
-            if (groups_get_activity_groupmode(
-                    $this->cm,
-                    $this->course
-            )) {
-                if ($currentgroupid > 0) {
-                    $groupname = groups_get_group_name($currentgroupid);
-                } else {
-                    if ($user->id) {
-                        if ($groups = groups_get_all_groups(
-                                $courseid,
-                                $user->id
-                        )) {
-                            foreach ($groups as $group) {
-                                $groupname .= $group->name . ', ';
-                            }
-                            $groupname = substr(
-                                    $groupname,
-                                    0,
-                                    strlen($groupname) - 2
-                            );
-                        } else {
-                            $groupname = ' (' . get_string('groupnonmembers') . ')';
+        // Moodle:
+        // Determine if the user is a member of a group in this course or not.
+        // TODO - review for performance.
+        $groupname = '';
+        if (groups_get_activity_groupmode(
+                $this->cm,
+                $this->course
+        )) {
+            if ($currentgroupid > 0) {
+                $groupname = groups_get_group_name($currentgroupid);
+            } else {
+                if ($user->id) {
+                    if ($groups = groups_get_all_groups(
+                            $courseid,
+                            $user->id
+                    )) {
+                        foreach ($groups as $group) {
+                            $groupname .= $group->name . ', ';
                         }
+                        $groupname = substr(
+                                $groupname,
+                                0,
+                                strlen($groupname) - 2
+                        );
+                    } else {
+                        $groupname = ' (' . get_string('groupnonmembers') . ')';
                     }
                 }
             }
+        }
 
-            if ($isanonymous) {
-                if (!isset($anonumap[$user->id])) {
-                    $anonumap[$user->id] = count($anonumap) + 1;
-                }
-                $fullname = get_string(
-                                'anonymous',
-                                'pimenkoquestionnaire'
-                        ) . $anonumap[$user->id];
-                $username = '';
-                $uid = '';
-            } else {
-                $uid = $user->id;
-                $fullname = fullname($user);
-                $username = $user->username;
+        if ($isanonymous) {
+            if (!isset($anonumap[$user->id])) {
+                $anonumap[$user->id] = count($anonumap) + 1;
             }
+            $fullname = get_string(
+                            'anonymous',
+                            'pimenkoquestionnaire'
+                    ) . $anonumap[$user->id];
+            $username = '';
+            $uid = '';
+        } else {
+            $uid = $user->id;
+            $fullname = fullname($user);
+            $username = $user->username;
+        }
         if (in_array(
                 'response',
                 $options
@@ -333,13 +333,26 @@ class exportquestionnaire extends pimenkoquestionnaire {
         return $positioned;
     }
 
-    /* {{{ proto array survey_generate_csv(int surveyid)
-    Exports the results of a survey to an array.
-    */
-    public function generate_csv(
+    /**
+     *
+     * Generate CSV
+     *
+     * @param string $rid
+     * @param string $userid
+     * @param int    $choicecodes
+     * @param int    $choicetext
+     * @param        $currentgroupid
+     * @param int    $showincompletes
+     *
+     * @return array
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    final public function generate_csv(
             $rid = '', $userid = '', $choicecodes = 1, $choicetext = 0, $currentgroupid, $showincompletes = 0
 
-    ) {
+    ): array {
         global $DB;
 
         raise_memory_limit('1G');

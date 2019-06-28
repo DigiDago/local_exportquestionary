@@ -220,13 +220,12 @@ class local_exportquestionary_external extends external_api {
                     $questionary->id,
                     $course->id
             );
-            $row = self::generatecsv_row($course,$questionary);
+            $row = self::generatecsv_row($course, $questionary);
             array_push(
                     $output,
                     $row
             );
         }
-
 
         $response = [];
         $response['name'] = $name;
@@ -253,16 +252,7 @@ class local_exportquestionary_external extends external_api {
         return new external_function_parameters($params);
     }
 
-    /**
-     * Returns description of method result value
-     *
-     * @return void
-     */
-    public static function exportcsvreport_returns() {
-        return null;
-    }
-
-    public static function generatecsv_row($course, $questionary) {
+    public static function generatecsv_row( $course, $questionary ) {
         global $DB;
         //['course', 'shortname', 'summary', 'category', 'responsenumber', 'studentnumber', 'returnnumber']
 
@@ -283,8 +273,18 @@ class local_exportquestionary_external extends external_api {
         $data = $DB->get_record_sql($sql);
 
         $returnnumber = ($data->responsenumber * 100) / $data->user_enrol;
-        $row = [$course->fullname,$course->shortname,$course->summary,$course->coursecat, $data->responsenumber, $data->user_enrol, $returnnumber];
+        $row = [$course->fullname, $course->shortname, $course->summary, $course->coursecat, $data->responsenumber,
+                $data->user_enrol, $returnnumber];
 
         return $row;
+    }
+
+    /**
+     * Returns description of method result value
+     *
+     * @return void
+     */
+    public static function exportcsvreport_returns() {
+        return null;
     }
 }

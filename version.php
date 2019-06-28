@@ -16,6 +16,7 @@
 
 /**
  * Plugin version and other meta-data are defined here.
+ *
  * @package     local_exportquestiony
  * @copyright   Pimenko 2019
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -23,11 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component    = 'local_exportquestionary';
-$plugin->release      = '0.1.1';
-$plugin->version      = 2019011805;
-$plugin->requires     = 2017111300;
-$plugin->maturity     = MATURITY_ALPHA;
+$plugin->component = 'local_exportquestionary';
+$plugin->release = '0.1.1';
+$plugin->version = 2019011805;
+$plugin->requires = 2017111300;
+$plugin->maturity = MATURITY_ALPHA;
 $plugin->dependencies = [
-    'mod_pimenkoquestionnaire' => ANY_VERSION
+        'mod_pimenkoquestionnaire' => ANY_VERSION
 ];

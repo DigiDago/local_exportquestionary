@@ -33,30 +33,30 @@ defined('MOODLE_INTERNAL') || die();
  * @throws dml_exception
  * @throws moodle_exception
  */
-function local_exportquestionary_extend_navigation(global_navigation $nav) {
+function local_exportquestionary_extend_navigation( global_navigation $nav ) {
     $context = CONTEXT_SYSTEM::instance();
     if (has_capability(
-        'local/exportquestionary:exportall',
-        $context
+            'local/exportquestionary:exportall',
+            $context
     )) {
         $url = new moodle_url(
-            '/local/exportquestionary/exportall.php',
-            []
+                '/local/exportquestionary/exportall.php',
+                []
         );
         $nav->add(
-            get_string(
-                'pluginname',
-                'local_exportquestionary'
-            ),
-            $url,
-            navigation_node::TYPE_SETTING,
-            null,
-            null,
-            new pix_icon(
-                'icon',
-                '',
-                'local_exportquestionary'
-            )
+                get_string(
+                        'pluginname',
+                        'local_exportquestionary'
+                ),
+                $url,
+                navigation_node::TYPE_SETTING,
+                null,
+                null,
+                new pix_icon(
+                        'icon',
+                        '',
+                        'local_exportquestionary'
+                )
         );
     }
 }
