@@ -534,7 +534,6 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 switch ($type) {
 
                     case QUESRADIO: // Single.
-                    case QUESTEACHERSELECT: // Single.
                     case QUESDROP:
                         $columns[][$qpos] = $col;
                         $questionidcols[][$qpos] = $qid;
@@ -562,7 +561,8 @@ class exportquestionnaire extends pimenkoquestionnaire {
                         break;
 
                     case QUESCHECK: // Multiple.
-                        $thisnum = 1;
+                    case QUESTEACHERSELECT: // Multiple.
+                    $thisnum = 1;
                         foreach ($choices as $choice) {
                             $content = $choice->content;
                             $modality = '';
@@ -747,7 +747,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 $row = [];
             }
 
-            if ($qtype === QUESRATE || $qtype === QUESCHECK) {
+            if ($qtype === QUESRATE || $qtype === QUESCHECK || $qtype === QUESTEACHERSELECT) {
                 $key = $qid . '_' . $responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
