@@ -36,12 +36,9 @@ require(["core/ajax", "jquery", "jqueryui"], function(ajax, $) {
                     let day = date.getDate().toString();
                     date = '_' + day + '_' + month + '_' + year;
                     let filename = response.name + date + '.csv';
-
-                    exportToCsv(filename, response.data);
-
+                    exportToCsv(filename, JSON.parse(response.data));
                 },
                 fail: function(response) {
-                    log.debug(response);
                 }
             }
         ], true, true);
@@ -61,12 +58,9 @@ require(["core/ajax", "jquery", "jqueryui"], function(ajax, $) {
                     let day = date.getDate().toString();
                     date = '_' + day + '_' + month + '_' + year;
                     let filename = response.name + date + '.csv';
-
-                    exportToCsv(filename, response.data);
-
+                    exportToCsv(filename, JSON.parse(response.data));
                 },
                 fail: function(response) {
-                    log.debug(response);
                 }
             }
         ], true, true);

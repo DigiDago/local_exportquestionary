@@ -753,7 +753,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                                 ['', get_string('other', 'pimenkoquestionnaire')], $content);
                         $responsetxt1 = $responserow->response;
                     } else if (($choicecodes == 1) && ($choicetext == 1)) {
-                        if($question->type_id == 11) {
+                        if ($question->type_id == 11) {
                             $responsetxt = $content;
                         } else {
                             $responsetxt = $c . ' : ' . $content;
@@ -777,7 +777,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                         $responsetxt = preg_replace("/[\r\n\t]/", ' ', $responsetxt);
                     }
                 }
-                if(isset($row[$position]) && $question->type_id == 11) {
+                if (isset($row[$position]) && $question->type_id == 11) {
                     $row[$position] = $row[$position] . " - " . $responsetxt;
                 } else {
                     $row[$position] = $responsetxt;

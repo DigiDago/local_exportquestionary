@@ -112,8 +112,7 @@ class local_exportquestionary_external extends external_api {
 
         $response = [];
         $response['name'] = $name;
-        $response['data'] = $csv;
-
+        $response['data'] =  json_encode($csv);
         return $response;
     }
 
@@ -197,12 +196,12 @@ class local_exportquestionary_external extends external_api {
                 trim($name)
         );
 
-        // Selected template name.
+        // Selected template name
         $questionarys = $DB->get_records_sql(
-                'SELECT
-            *
-          FROM {pimenkoquestionnaire_survey} qs
-          LEFT JOIN {pimenkoquestionnaire} q
+                'SELECT 
+            * 
+          FROM {pimenkoquestionnaire_survey} qs 
+          LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
           WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
           AND qs.realm != "template"'
@@ -222,8 +221,7 @@ class local_exportquestionary_external extends external_api {
 
         $response = [];
         $response['name'] = $name;
-        $response['data'] = $output;
-
+        $response['data'] =  json_encode($output);
         return $response;
     }
 
