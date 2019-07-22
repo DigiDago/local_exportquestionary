@@ -469,23 +469,12 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 ) > 0) {
             $choiceparams = [$this->survey->id];
 
-            $version = get_config('mod_pimenkoquestionnaire', 'version');
-
-            if ($version < '2018050100') {
-                $choicesql = "
-                    SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
-                      FROM {pimenko_question} q
-                      JOIN {pimenko_quest_choice} c ON question_id = q.id
-                     WHERE q.survey_id = ? ORDER BY cid ASC
-                ";
-            } else {
-                $choicesql = "
-                    SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
-                      FROM {pimenko_question} q
-                      JOIN {pimenko_quest_choice} c ON question_id = q.id
-                     WHERE q.surveyid = ? ORDER BY cid ASC
-                ";
-            }
+            $choicesql = "
+                SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
+                  FROM {pimenko_question} q
+                  JOIN {pimenko_quest_choice} c ON question_id = q.id
+                 WHERE q.surveyid = ? ORDER BY cid ASC
+            ";
 
             $choicerecords = $DB->get_records_sql(
                     $choicesql,
@@ -537,32 +526,37 @@ class exportquestionnaire extends pimenkoquestionnaire {
                     case QUESDROP:
                         $columns[][$qpos] = $col;
                         $questionidcols[][$qpos] = $qid;
-                        array_push(
-                                $types,
-                                $idtocsvmap[$type]
-                        );
+                        array_push($types, $idtocsvmap[$type]);
                         $thisnum = 1;
                         foreach ($choices as $choice) {
                             $content = $choice->content;
                             // If "Other" add a column for the actual "other" text entered.
-                            if (preg_match(
-                                    '/^!other/',
-                                    $content
-                            )) {
+                            if (preg_match('/^!other/', $content)) {
                                 $col = $choice->name . '_' . $stringother;
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = null;
-                                array_push(
-                                        $types,
-                                        '0'
-                                );
+                                array_push($types, '0');
                             }
                         }
                         break;
-
+                    case QUESTEACHERSELECT:
+                        $columns[][$qpos] = $col;
+                        $questionidcols[][$qpos] = $qid;
+                        array_push($types, $idtocsvmap[$type]);
+                        $thisnum = 1;
+                        foreach ($choices as $choice) {
+                            $content = $choice->content;
+                            // If "Other" add a column for the actual "other" text entered.
+                            if (preg_match('/^!other/', $content)) {
+                                $col = $choice->name . '_' . $stringother;
+                                $columns[][$qpos] = $col;
+                                $questionidcols[][$qpos] = null;
+                                array_push($types, '0');
+                            }
+                        }
+                        break;
                     case QUESCHECK: // Multiple.
-                    case QUESTEACHERSELECT: // Multiple.
-                    $thisnum = 1;
+                        $thisnum = 1;
                         foreach ($choices as $choice) {
                             $content = $choice->content;
                             $modality = '';
@@ -577,24 +571,15 @@ class exportquestionnaire extends pimenkoquestionnaire {
                             $col = $choice->name . '->' . $modality;
                             $columns[][$qpos] = $col;
                             $questionidcols[][$qpos] = $qid . '_' . $choice->cid;
-                            array_push(
-                                    $types,
-                                    '0'
-                            );
+                            array_push($types, '0');
                             // If "Other" add a column for the "other" checkbox.
                             // Then add a column for the actual "other" text entered.
-                            if (preg_match(
-                                    '/^!other/',
-                                    $content
-                            )) {
+                            if (preg_match('/^!other/', $content)) {
                                 $content = $stringother;
                                 $col = $choice->name . '->[' . $content . ']';
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = null;
-                                array_push(
-                                        $types,
-                                        '0'
-                                );
+                                array_push($types, '0');
                             }
                         }
                         break;
@@ -608,21 +593,11 @@ class exportquestionnaire extends pimenkoquestionnaire {
                             if ($choice->precise == 3) {
                                 $osgood = true;
                             }
-                            if (preg_match(
-                                    "/^[0-9]{1,3}=/",
-                                    $content,
-                                    $ndd
-                            )) {
+                            if (preg_match("/^[0-9]{1,3}=/", $content, $ndd)) {
                                 $nameddegrees++;
                             } else {
                                 if ($osgood) {
-                                    list($contentleft, $contentright) = array_merge(
-                                            preg_split(
-                                                    '/[|]/',
-                                                    $content
-                                            ),
-                                            [' ']
-                                    );
+                                    list($contentleft, $contentright) = array_merge(preg_split('/[|]/', $content), [' ']);
                                     $contents = pimenkoquestionnaire_choice_values($contentleft);
                                     if ($contents->title) {
                                         $contentleft = $contents->title;
@@ -632,11 +607,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                                         $contentright = $contents->title;
                                     }
                                     $modality = strip_tags($contentleft . '|' . $contentright);
-                                    $modality = preg_replace(
-                                            "/[\r\n\t]/",
-                                            ' ',
-                                            $modality
-                                    );
+                                    $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
                                 } else {
                                     $contents = pimenkoquestionnaire_choice_values($content);
                                     if ($contents->modname) {
@@ -645,20 +616,13 @@ class exportquestionnaire extends pimenkoquestionnaire {
                                         $modality = $contents->title;
                                     } else {
                                         $modality = strip_tags($contents->text);
-                                        $modality = preg_replace(
-                                                "/[\r\n\t]/",
-                                                ' ',
-                                                $modality
-                                        );
+                                        $modality = preg_replace("/[\r\n\t]/", ' ', $modality);
                                     }
                                 }
                                 $col = $choice->name . '->' . $modality;
                                 $columns[][$qpos] = $col;
                                 $questionidcols[][$qpos] = $qid . '_' . $choice->cid;
-                                array_push(
-                                        $types,
-                                        $idtocsvmap[$type]
-                                );
+                                array_push($types, $idtocsvmap[$type]);
                             }
                         }
                         break;
@@ -730,34 +694,30 @@ class exportquestionnaire extends pimenkoquestionnaire {
         foreach ($allresponsesrs as $responserow) {
             $rid = $responserow->rid;
             $qid = $responserow->question_id;
+
+            // It's possible for a response to exist for a deleted question. Ignore these.
+            if (!isset($this->questions[$qid])) {
+                break;
+            }
+
             $question = $this->questions[$qid];
             $qtype = intval($question->type_id);
             $questionobj = $this->questions[$qid];
 
             if ($prevresprow !== false && $prevresprow->rid !== $rid) {
-                $output[] = $this->process_csv_row(
-                        $row,
-                        $prevresprow,
-                        $currentgroupid,
-                        $questionsbyposition,
-                        $nbinfocols,
-                        $numrespcols,
-                        $showincompletes
-                );
+                $output[] = $this->process_csv_row($row, $prevresprow, $currentgroupid, $questionsbyposition,
+                        $nbinfocols, $numrespcols, $showincompletes);
                 $row = [];
             }
 
-            if ($qtype === QUESRATE || $qtype === QUESCHECK || $qtype === QUESTEACHERSELECT) {
+            if ($qtype === QUESRATE || $qtype === QUESCHECK) {
                 $key = $qid . '_' . $responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
                     $choicetxt = $responserow->rankvalue + 1;
                 } else {
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
-                    if (preg_match(
-                            '/^!other/',
-                            $content
-                    )) {
+                    if (preg_match('/^!other/', $content)) {
                         // If this is an "other" column, put the text entered in the next position.
                         $row[$position + 1] = $responserow->response;
                         $choicetxt = empty($responserow->choice_id) ? '0' : '1';
@@ -774,10 +734,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 if ($questionobj->has_choices()) {
                     // This is choice type question, so process as so.
                     $c = 0;
-                    if (in_array(
-                            intval($question->type_id),
-                            $choicetypes
-                    )) {
+                    if (in_array(intval($question->type_id), $choicetypes)) {
                         $choices = $choicesbyqid[$qid];
                         // Get position of choice.
                         foreach ($choices as $choice) {
@@ -789,23 +746,24 @@ class exportquestionnaire extends pimenkoquestionnaire {
                     }
 
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
-                    if (preg_match(
-                            '/^!other/',
-                            $content
-                    )) {
+
+                    if (preg_match('/^!other/', $content)) {
                         // If this has an "other" text, use it.
-                        $responsetxt = get_string(
-                                'other',
-                                'pimenkoquestionnaire'
-                        );
+                        $responsetxt = preg_replace(["/^!other=/", "/^!other/"],
+                                ['', get_string('other', 'pimenkoquestionnaire')], $content);
                         $responsetxt1 = $responserow->response;
                     } else if (($choicecodes == 1) && ($choicetext == 1)) {
-                        $responsetxt = $c . ' : ' . $content;
+                        if($question->type_id == 11) {
+                            $responsetxt = $content;
+                        } else {
+                            $responsetxt = $c . ' : ' . $content;
+                        }
                     } else if ($choicecodes == 1) {
                         $responsetxt = $c;
                     } else {
                         $responsetxt = $content;
                     }
+
                 } else if (intval($qtype) === QUESYESNO) {
                     // At this point, the boolean responses are returned as characters in the "response"
                     // field instead of "choice_id" for csv exports (CONTRIB-6436).
@@ -816,14 +774,14 @@ class exportquestionnaire extends pimenkoquestionnaire {
                     if (!empty($responsetxt)) {
                         $responsetxt = $responserow->response;
                         $responsetxt = strip_tags($responsetxt);
-                        $responsetxt = preg_replace(
-                                "/[\r\n\t]/",
-                                ' ',
-                                $responsetxt
-                        );
+                        $responsetxt = preg_replace("/[\r\n\t]/", ' ', $responsetxt);
                     }
                 }
-                $row[$position] = $responsetxt;
+                if(isset($row[$position]) && $question->type_id == 11) {
+                    $row[$position] = $row[$position] . " - " . $responsetxt;
+                } else {
+                    $row[$position] = $responsetxt;
+                }
                 // Check for "other" text and set it to the next position if present.
                 if (!empty($responsetxt1)) {
                     $row[$position + 1] = $responsetxt1;

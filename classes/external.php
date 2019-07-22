@@ -160,17 +160,6 @@ class local_exportquestionary_external extends external_api {
                         'title' => $title
                 ]
         );
-        // Selected template name.
-        $questionarys = $DB->get_records_sql(
-                'SELECT
-            *
-          FROM {pimenkoquestionnaire_survey} qs
-          LEFT JOIN {pimenkoquestionnaire} q
-            ON qs.id = q.sid
-          WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
-          AND qs.realm != "template"'
-        );
-        $csv = [];
 
         //generate CSV header
         $columns = [];
@@ -195,8 +184,6 @@ class local_exportquestionary_external extends external_api {
             }
         }
 
-        $nbinfocols = count($columns); // Number of csv.
-
         array_push(
                 $output,
                 $columns
@@ -210,15 +197,21 @@ class local_exportquestionary_external extends external_api {
                 trim($name)
         );
 
+        // Selected template name.
+        $questionarys = $DB->get_records_sql(
+                'SELECT
+            *
+          FROM {pimenkoquestionnaire_survey} qs
+          LEFT JOIN {pimenkoquestionnaire} q
+            ON qs.id = q.sid
+          WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
+          AND qs.realm != "template"'
+        );
+
         foreach ($questionarys as $questionary) {
             $course = $DB->get_record(
                     "course",
                     ["id" => $questionary->course]
-            );
-            $cm = get_coursemodule_from_instance(
-                    "pimenkoquestionnaire",
-                    $questionary->id,
-                    $course->id
             );
             $row = self::generatecsv_row($course, $questionary);
             array_push(

@@ -41,6 +41,7 @@ require(["core/ajax", "jquery", "jqueryui"], function(ajax, $) {
 
                 },
                 fail: function(response) {
+                    log.debug(response);
                 }
             }
         ], true, true);
@@ -65,6 +66,7 @@ require(["core/ajax", "jquery", "jqueryui"], function(ajax, $) {
 
                 },
                 fail: function(response) {
+                    log.debug(response);
                 }
             }
         ], true, true);
