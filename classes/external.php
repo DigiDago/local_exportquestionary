@@ -262,8 +262,11 @@ class local_exportquestionary_external extends external_api {
                 WHERE e.courseid=" . $course->id . " AND u.suspended = 0 AND u.deleted = 0) AS user_enrol";
 
         $data = $DB->get_record_sql($sql);
-
-        $returnnumber = ($data->responsenumber * 100) / $data->user_enrol;
+        if ($data->responsenumber > 0 && $data->user_enrol > 0) {
+            $returnnumber = round(($data->responsenumber * 100) / $data->user_enrol,4);
+        } else {
+            $returnnumber = 0;
+        }
         $row = [$course->fullname, $course->shortname, $course->summary, $course->coursecat, $data->responsenumber,
                 $data->user_enrol, $returnnumber];
 
