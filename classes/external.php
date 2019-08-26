@@ -189,7 +189,7 @@ class local_exportquestionary_external extends external_api {
         );
 
         // Generate csv name
-        $name = "export_questionnaire";
+        $name = "export_questionnaire_resume";
         $name = preg_replace(
                 "/[^A-Z0-9]+/i",
                 "_",
@@ -254,12 +254,13 @@ class local_exportquestionary_external extends external_api {
                 LEFT JOIN {pimenkoquestionnaire} pq
                     ON pr.pimenkoquestionnaireid = pq.id
                 WHERE pr.pimenkoquestionnaireid = " . $questionary->id . ") as responsenumber,
-                (SELECT
-                    COUNT(DISTINCT u.id)
-                FROM {user} u
-                LEFT JOIN {user_enrolments} ue ON u.id = ue.userid
-                LEFT JOIN {enrol} e ON ue.enrolid=e.id
-                WHERE e.courseid=" . $course->id . " AND u.suspended = 0 AND u.deleted = 0) AS user_enrol";
+                (SELECT COUNT(DISTINCT u.id)
+                    FROM {user} u
+                    INNER JOIN {role_assignments} ra ON ra.userid = u.id
+                    INNER JOIN {context} ct ON ct.id = ra.contextid
+                    INNER JOIN {course} c ON c.id = ct.instanceid
+                    INNER JOIN {role} r ON r.id = ra.roleid
+                WHERE c.id=" . $course->id . " AND u.suspended = 0 AND u.deleted = 0 AND r.shortname = 'student') AS user_enrol";
 
         $data = $DB->get_record_sql($sql);
         if ($data->responsenumber > 0 && $data->user_enrol > 0) {
