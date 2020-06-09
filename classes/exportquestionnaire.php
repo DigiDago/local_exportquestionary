@@ -175,6 +175,16 @@ class exportquestionnaire extends pimenkoquestionnaire {
             }
         }
 
+        $cohortname = "";
+        $sql = "SELECT
+                    GROUP_CONCAT(c.name SEPARATOR ' - ') as cohort
+                FROM {cohort_members} cm
+                INNER JOIN {cohort} c ON cm.cohortid = c.id
+                INNER JOIN {enrol} e ON c.name = e.name AND e.courseid = ". $courseid ."
+                WHERE cm.userid = " . $user->id;
+        $data = $DB->get_record_sql($sql);
+        $cohortname = $data->cohort;
+
         if ($isanonymous) {
             if (!isset($anonumap[$user->id])) {
                 $anonumap[$user->id] = count($anonumap) + 1;
@@ -277,6 +287,15 @@ class exportquestionnaire extends pimenkoquestionnaire {
             array_push(
                     $positioned,
                     $groupname
+            );
+        }
+        if (in_array(
+                'cohort',
+                $options
+        )) {
+            array_push(
+                    $positioned,
+                    $cohortname
             );
         }
         if (in_array(
@@ -387,6 +406,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
         if ($showincompletes == 1) {
             $options[] = 'complete';
         }
+
         $columns = [];
         $types = [];
 
@@ -521,25 +541,9 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 $choices = $choicesbyqid[$qid];
 
                 switch ($type) {
-
+                    case QUESTEACHERSELECT:
                     case QUESRADIO: // Single.
                     case QUESDROP:
-                        $columns[][$qpos] = $col;
-                        $questionidcols[][$qpos] = $qid;
-                        array_push($types, $idtocsvmap[$type]);
-                        $thisnum = 1;
-                        foreach ($choices as $choice) {
-                            $content = $choice->content;
-                            // If "Other" add a column for the actual "other" text entered.
-                            if (preg_match('/^!other/', $content)) {
-                                $col = $choice->name . '_' . $stringother;
-                                $columns[][$qpos] = $col;
-                                $questionidcols[][$qpos] = null;
-                                array_push($types, '0');
-                            }
-                        }
-                        break;
-                    case QUESTEACHERSELECT:
                         $columns[][$qpos] = $col;
                         $questionidcols[][$qpos] = $qid;
                         array_push($types, $idtocsvmap[$type]);
