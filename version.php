@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_exportquestionary';
 $plugin->release = '0.1.1';
-$plugin->version = 2019011805;
+$plugin->version = 2019011808;
 $plugin->requires = 2017111300;
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->dependencies = [

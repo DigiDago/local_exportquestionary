@@ -112,7 +112,7 @@ class local_exportquestionary_external extends external_api {
 
         $response = [];
         $response['name'] = $name;
-        $response['data'] =  json_encode($csv);
+        $response['data'] = json_encode($csv);
         return $response;
     }
 
@@ -164,8 +164,16 @@ class local_exportquestionary_external extends external_api {
         $columns = [];
         $output = [];
 
-        $options = ['course', 'shortname', 'summary', 'category', 'responsenumber', 'studentnumber', 'returnnumber'];
-        foreach ($options as $option) {
+        $options = [
+                'course' => 'course',
+                'shortname' => 'shortname',
+                'summary' => 'summary',
+                'category' => 'category',
+                'responsenumber' => 'responsenumber',
+                'studentnumber' => 'studentnumber',
+                'returnnumber' => 'returnnumber'
+        ];
+        foreach ($options as $key => $option) {
             if (in_array(
                     $option,
                     [
@@ -174,12 +182,12 @@ class local_exportquestionary_external extends external_api {
                             'returnnumber'
                     ]
             )) {
-                $columns[] = get_string(
+                $columns[$key] = get_string(
                         $option,
                         'local_exportquestionary'
                 );
             } else {
-                $columns[] = get_string($option);
+                $columns[$key] = get_string($option);
             }
         }
 
@@ -221,7 +229,7 @@ class local_exportquestionary_external extends external_api {
 
         $response = [];
         $response['name'] = $name;
-        $response['data'] =  json_encode($output);
+        $response['data'] = json_encode($output);
         return $response;
     }
 
@@ -245,7 +253,7 @@ class local_exportquestionary_external extends external_api {
 
     public static function generatecsv_row( $course, $questionary ) {
         global $DB;
-        //['course', 'shortname', 'summary', 'category', 'responsenumber', 'studentnumber', 'returnnumber']
+        // ['course', 'shortname', 'summary', 'category', 'responsenumber', 'studentnumber', 'returnnumber']
 
         $sql = "SELECT
                 (SELECT
@@ -264,13 +272,19 @@ class local_exportquestionary_external extends external_api {
 
         $data = $DB->get_record_sql($sql);
         if ($data->responsenumber > 0 && $data->user_enrol > 0) {
-            $returnnumber = round(($data->responsenumber * 100) / $data->user_enrol,4);
+            $returnnumber = round(($data->responsenumber * 100) / $data->user_enrol, 4);
         } else {
             $returnnumber = 0;
         }
-        $row = [$course->fullname, $course->shortname, $course->summary, $course->coursecat, $data->responsenumber,
-                $data->user_enrol, $returnnumber];
-
+        $row = [
+                'course' => $course->fullname,
+                'shortname' => $course->shortname,
+                'summary' => $course->summary,
+                'category' => $course->coursecat,
+                'responsenumber' => $data->responsenumber,
+                'studentnumber' => $data->user_enrol,
+                'returnnumber' => $returnnumber
+        ];
         return $row;
     }
 

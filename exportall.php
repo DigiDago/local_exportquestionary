@@ -59,6 +59,7 @@ $PAGE->set_heading(
 );
 
 $PAGE->requires->css('/local/exportquestionary/assets/css/jquery-ui.min.css');
+$PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/xlsx.js'));
 $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportquestionary.js'));
 
 // Get all template questionary
