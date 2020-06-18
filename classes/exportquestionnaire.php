@@ -180,7 +180,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                     GROUP_CONCAT(c.name SEPARATOR ' - ') as cohort
                 FROM {cohort_members} cm
                 INNER JOIN {cohort} c ON cm.cohortid = c.id
-                INNER JOIN {enrol} e ON c.id = e.customint1 AND e.courseid = ". $courseid ."
+                INNER JOIN {enrol} e ON c.id = e.customint1 AND enrol = 'cohort' AND e.courseid = ". $courseid ."
                 WHERE cm.userid = " . $user->id;
         $data = $DB->get_record_sql($sql);
         $cohortname = $data->cohort;
