@@ -50,16 +50,21 @@ class local_exportquestionary_external extends external_api {
                 ]
         );
 
-        // Selected template name
-        $questionarys = $DB->get_records_sql(
-                'SELECT 
-            * 
-          FROM {pimenkoquestionnaire_survey} qs 
+        $params['title'] = preg_replace("/[^A-Za-z0-9 ]/", '', $params['title']);
+
+        // Selected template name.
+        $sql = "SELECT
+            *
+            FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
-          WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
-          AND qs.realm != "template"'
+          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name = '%" . $params['title'] . "%' )
+          AND qs.realm != 'template' AND q.course != 1";
+
+        $questionarys = $DB->get_records_sql(
+                $sql
         );
+
         $csv = [];
         foreach ($questionarys as $questionary) {
             $course = $DB->get_record(
@@ -77,6 +82,7 @@ class local_exportquestionary_external extends external_api {
                     $course,
                     $cm
             );
+
             if (count($csv) < 1) {
                 $csv = $questionary->generate_csv(
                         null,
@@ -160,7 +166,7 @@ class local_exportquestionary_external extends external_api {
                 ]
         );
 
-        //generate CSV header
+        // Generate CSV header.
         $columns = [];
         $output = [];
 
@@ -196,7 +202,7 @@ class local_exportquestionary_external extends external_api {
                 $columns
         );
 
-        // Generate csv name
+        // Generate csv name.
         $name = "export_questionnaire_resume";
         $name = preg_replace(
                 "/[^A-Z0-9]+/i",
@@ -204,15 +210,18 @@ class local_exportquestionary_external extends external_api {
                 trim($name)
         );
 
-        // Selected template name
+        $params['title'] = preg_replace("/[^A-Za-z0-9 ]/", '', $params['title']);
+
+        // Selected template name.
         $questionarys = $DB->get_records_sql(
-                'SELECT 
-            * 
+                "SELECT 
+            q.id, q.course
           FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
-          WHERE ( qs.title = "' . $params['title'] . '" OR q.name = "' . $params['title'] . '" )
-          AND qs.realm != "template"'
+          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name = '%" . $params['title'] . "%' )
+          AND qs.realm != 'template' AND q.course != 1
+          GROUP BY q.course, q.id"
         );
 
         foreach ($questionarys as $questionary) {
@@ -259,9 +268,11 @@ class local_exportquestionary_external extends external_api {
                 (SELECT
                     COUNT(DISTINCT pr.id) as responsenumber
                 FROM {pimenko_response} pr
-                LEFT JOIN {pimenkoquestionnaire} pq
-                    ON pr.pimenkoquestionnaireid = pq.id
-                WHERE pr.pimenkoquestionnaireid = " . $questionary->id . ") as responsenumber,
+                LEFT JOIN {pimenkoquestionnaire} pq ON pr.pimenkoquestionnaireid = pq.id
+                INNER JOIN {user} u ON pr.userid = u.id
+                INNER JOIN {role_assignments} ra ON ra.userid = u.id
+                INNER JOIN {role} r ON r.id = ra.roleid
+                WHERE pr.pimenkoquestionnaireid = " . $questionary->id . " AND u.suspended = 0 AND u.deleted = 0 AND r.shortname = 'student') as responsenumber,
                 (SELECT COUNT(DISTINCT u.id)
                     FROM {user} u
                     INNER JOIN {role_assignments} ra ON ra.userid = u.id
