@@ -22,40 +22,39 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require('../../config.php');
+require_once(__DIR__ . '/../../config.php');
 
 require_once($CFG->dirroot . '/mod/pimenkoquestionnaire/locallib.php');
 
-global $DB, $OUTPUT;
-
-$context = context_system::instance();
 require_login();
+$context = context_system::instance();
+
 require_capability(
-        'local/exportquestionary:exportall',
-        $context
+    'local/exportquestionary:exportall',
+    $context
 );
 
-// Set your page
+// Set your page.
 $PAGE->set_pagetype('exportall');
 $PAGE->set_url(
-        new moodle_url(
-                "/local/exportquestionary/exportall.php",
-                []
-        )
+    new moodle_url(
+        "/local/exportquestionary/exportall.php",
+        []
+    )
 );
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('report');
 $PAGE->set_title(
-        get_string(
-                'pluginname',
-                'local_exportquestionary'
-        )
+    get_string(
+        'pluginname',
+        'local_exportquestionary'
+    )
 );
 $PAGE->set_heading(
-        get_string(
-                'pluginname',
-                'local_exportquestionary'
-        )
+    get_string(
+        'pluginname',
+        'local_exportquestionary'
+    )
 );
 
 $PAGE->requires->css('/local/exportquestionary/assets/css/jquery-ui.min.css');
@@ -64,8 +63,8 @@ $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportque
 
 // Get all template questionary
 $templatequestionary = $DB->get_records_sql(
-        "SELECT 
-            * 
+    "SELECT 
+            qs.title 
           FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
           ON qs.id = q.sid 
@@ -73,13 +72,18 @@ $templatequestionary = $DB->get_records_sql(
 );
 
 $template = [];
+
+foreach ($templatequestionary as $key => $questionary) {
+    $questionary->title = strip_tags(format_text($questionary->title));
+}
+
 $template['templatequestionary'] = array_values($templatequestionary);
 
 echo $OUTPUT->header();
 
 echo $OUTPUT->render_from_template(
-        'local_exportquestionary/exportform',
-        $template
+    'local_exportquestionary/exportform',
+    $template
 );
 
 echo $OUTPUT->footer();

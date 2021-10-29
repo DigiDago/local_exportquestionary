@@ -28,340 +28,15 @@ require_once($CFG->dirroot . '/mod/pimenkoquestionnaire/pimenkoquestionnaire.cla
 
 class exportquestionnaire extends pimenkoquestionnaire {
     /**
-     * Process individual row for csv output
-     *
-     * @param array    $row
-     * @param stdClass $resprow resultset row
-     * @param int      $currentgroupid
-     * @param array    $questionsbyposition
-     * @param int      $nbinfocols
-     * @param int      $numrespcols
-     * @param int      $showincompletes
-     *
-     * @return array
-     * @throws coding_exception
-     * @throws dml_exception
-     */
-    final public function process_csv_row(
-            array &$row, stdClass $resprow, $currentgroupid, array &$questionsbyposition, $nbinfocols, $numrespcols,
-            $showincompletes = 0
-    ): array {
-        global $DB;
-
-        static $config = null;
-        // If using an anonymous response, map users to unique user numbers so that number of unique anonymous users can be seen.
-        static $anonumap = [];
-
-        if ($config === null) {
-            $config = get_config(
-                    'pimenkoquestionnaire',
-                    'downloadoptions'
-            );
-            $replace = 'course,shortname,summary,category,';
-            $find = 'course,';
-            $pos = strpos(
-                    $config,
-                    'course,'
-            );
-            $config = substr_replace(
-                    $config,
-                    $replace,
-                    $pos,
-                    strlen($find)
-            );
-        }
-        $options = empty($config) ? [] : explode(
-                ',',
-                $config
-        );
-
-        if ($showincompletes == 1) {
-            $options[] = 'complete';
-        }
-
-        $positioned = [];
-        $user = new stdClass();
-        foreach ($this->user_fields() as $userfield) {
-            $user->$userfield = $resprow->$userfield;
-        }
-        $user->id = $resprow->userid;
-        $isanonymous = ($this->respondenttype == 'anonymous');
-
-        // Moodle:
-        // Get the course name that this questionnaire belongs to.
-        $ispublic = null;
-
-        $version = get_config('mod_pimenkoquestionnaire', 'version');
-
-        if ($version < '2018050100') {
-            $ispublic = $this->survey->realm == 'public';
-        } else {
-            $ispublic = $this->survey_is_public();
-        }
-        if (!$ispublic) {
-            $courseid = $this->course->id;
-            $coursename = $this->course->fullname;
-            $shortname = $this->course->shortname;
-            $coursesummary = $this->course->summary;
-            $coursecat = $DB->get_record(
-                    'course_categories',
-                    ['id' => $this->course->category]
-            );
-        } else {
-            // For a public questionnaire, look for the course that used it.
-            $sql = 'SELECT q.id, q.course, c.fullname, c.summary , cc.name as coursecat' . 'FROM {pimenko_response} qr ' .
-                    'INNER JOIN {pimenkoquestionnaire} q ON qr.questionnaireid = q.id ' .
-                    'INNER JOIN {course} c ON q.course = c.id ' . 'INNER JOIN {course_categories} cc ON c.category = cc.id ' .
-                    'WHERE qr.id = ? AND qr.complete = ? ';
-            if ($record = $DB->get_record_sql(
-                    $sql,
-                    [
-                            $resprow->rid,
-                            'y'
-                    ]
-            )) {
-                $courseid = $record->course;
-                $coursename = $record->fullname;
-                $shortname = $record->shortname;
-                $coursesummary = $record->summary;
-                $coursecat = $record->coursecat;
-            } else {
-                $courseid = $this->course->id;
-                $coursename = $this->course->fullname;
-                $shortname = $this->course->shortname;
-                $coursesummary = $this->course->summary;
-                $coursecat = $this->course->coursecat;
-            }
-        }
-
-        $coursecatpath = explode('/', $coursecat->path);
-        if ($coursecatpath[2]) {
-            $coursecatparent = $DB->get_record(
-                    'course_categories',
-                    ['id' => $coursecatpath[2]]
-            );
-            $coursecat = $coursecatparent->name;
-        } else {
-            $coursecat = $coursecat->name;
-        }
-        // Moodle:
-        // Determine if the user is a member of a group in this course or not.
-        // TODO - review for performance.
-        $groupname = '';
-        if (groups_get_activity_groupmode(
-                $this->cm,
-                $this->course
-        )) {
-            if ($currentgroupid > 0) {
-                $groupname = groups_get_group_name($currentgroupid);
-            } else {
-                if ($user->id) {
-                    if ($groups = groups_get_all_groups(
-                            $courseid,
-                            $user->id
-                    )) {
-                        foreach ($groups as $group) {
-                            $groupname .= $group->name . ', ';
-                        }
-                        $groupname = substr(
-                                $groupname,
-                                0,
-                                strlen($groupname) - 2
-                        );
-                    } else {
-                        $groupname = ' (' . get_string('groupnonmembers') . ')';
-                    }
-                }
-            }
-        }
-
-        $cohortname = "";
-        $sql = "SELECT
-                    GROUP_CONCAT(c.name SEPARATOR ' - ') as cohort
-                FROM {cohort_members} cm
-                INNER JOIN {cohort} c ON cm.cohortid = c.id
-                INNER JOIN {enrol} e ON c.id = e.customint1 AND enrol = 'cohort' AND e.courseid = ". $courseid ."
-                WHERE cm.userid = " . $user->id;
-        $data = $DB->get_record_sql($sql);
-        $cohortname = $data->cohort;
-
-        if ($isanonymous) {
-            if (!isset($anonumap[$user->id])) {
-                $anonumap[$user->id] = count($anonumap) + 1;
-            }
-            $fullname = get_string(
-                            'anonymous',
-                            'pimenkoquestionnaire'
-                    ) . $anonumap[$user->id];
-            $username = '';
-            $uid = '';
-        } else {
-            $uid = $user->id;
-            $fullname = fullname($user);
-            $username = $user->username;
-        }
-        if (in_array(
-                'response',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $resprow->rid
-            );
-        }
-        if (in_array(
-                'submitted',
-                $options
-        )) {
-            // For better compabitility & readability with Excel.
-            $submitted = date(
-                    get_string(
-                            'strfdateformatcsv',
-                            'pimenkoquestionnaire'
-                    ),
-                    $resprow->submitted
-            );
-            array_push(
-                    $positioned,
-                    $submitted
-            );
-        }
-        if (in_array(
-                'institution',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $user->institution
-            );
-        }
-        if (in_array(
-                'department',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $user->department
-            );
-        }
-        if (in_array(
-                'course',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $coursename
-            );
-        }
-        if (in_array(
-                'shortname',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $shortname
-            );
-        }
-        if (in_array(
-                'summary',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $coursesummary
-            );
-        }
-        if (in_array(
-                'category',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $coursecat
-            );
-        }
-        if (in_array(
-                'group',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $groupname
-            );
-        }
-        if (in_array(
-                'cohort',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $cohortname
-            );
-        }
-        if (in_array(
-                'id',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $uid
-            );
-        }
-        if (in_array(
-                'fullname',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $fullname
-            );
-        }
-        if (in_array(
-                'username',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $username
-            );
-        }
-        if (in_array(
-                'complete',
-                $options
-        )) {
-            array_push(
-                    $positioned,
-                    $resprow->complete
-            );
-        }
-        for ($c = $nbinfocols; $c < $numrespcols; $c++) {
-            if (isset($row[$c])) {
-                $positioned[] = $row[$c];
-            } else if (isset($questionsbyposition[$c])) {
-                $question = $questionsbyposition[$c];
-                $qtype = intval($question->type_id);
-                if ($qtype === QUESCHECK) {
-                    $positioned[] = '0';
-                } else {
-                    $positioned[] = null;
-                }
-            } else {
-                $positioned[] = null;
-            }
-        }
-        return $positioned;
-    }
-
-    /**
      *
      * Generate CSV
      *
      * @param string $rid
      * @param string $userid
-     * @param int    $choicecodes
-     * @param int    $choicetext
+     * @param int $choicecodes
+     * @param int $choicetext
      * @param        $currentgroupid
-     * @param int    $showincompletes
+     * @param int $showincompletes
      *
      * @return array
      * @throws coding_exception
@@ -369,38 +44,41 @@ class exportquestionnaire extends pimenkoquestionnaire {
      * @throws moodle_exception
      */
     final public function generate_csv(
-            $rid = '', $userid = '', $choicecodes = 1, $choicetext = 0, $currentgroupid, $showincompletes = 0
+        $rid = '', $userid = '', $choicecodes = 1, $choicetext = 0, $currentgroupid, $showincompletes = 0
 
     ): array {
-        global $DB;
+        global $DB, $PAGE;
+
+        $context = context_system::instance();
+        $PAGE->set_context($context);
 
         raise_memory_limit('1G');
 
         $output = [];
         $stringother = get_string(
-                'other',
-                'pimenkoquestionnaire'
+            'other',
+            'pimenkoquestionnaire'
         );
 
         $config = get_config(
-                'pimenkoquestionnaire',
-                'downloadoptions'
+            'pimenkoquestionnaire',
+            'downloadoptions'
         );
         $replace = 'course,shortname,summary,category,';
         $find = 'course,';
         $pos = strpos(
-                $config,
-                'course,'
+            $config,
+            'course,'
         );
         $config = substr_replace(
-                $config,
-                $replace,
-                $pos,
-                strlen($find)
+            $config,
+            $replace,
+            $pos,
+            strlen($find)
         );
         $options = empty($config) ? [] : explode(
-                ',',
-                $config
+            ',',
+            $config
         );
 
         if ($showincompletes == 1) {
@@ -412,20 +90,20 @@ class exportquestionnaire extends pimenkoquestionnaire {
 
         foreach ($options as $option) {
             if (in_array(
-                    $option,
-                    [
-                            'response',
-                            'submitted',
-                            'id'
-                    ]
+                $option,
+                [
+                    'response',
+                    'submitted',
+                    'id'
+                ]
             )) {
                 $columns[] = get_string(
-                        $option,
-                        'pimenkoquestionnaire'
+                    $option,
+                    'pimenkoquestionnaire'
                 );
                 $types[] = 0;
             } else {
-                $columns[] = get_string($option);
+                $columns[] = format_text($option);
                 $types[] = 1;
             }
         }
@@ -433,46 +111,46 @@ class exportquestionnaire extends pimenkoquestionnaire {
         $nbinfocols = count($columns);
 
         $idtocsvmap = [
-                '0',
+            '0',
             // 0: unused
-                '0',
+            '0',
             // 1: bool -> boolean
-                '1',
+            '1',
             // 2: text -> string
-                '1',
+            '1',
             // 3: essay -> string
-                '0',
+            '0',
             // 4: radio -> string
-                '0',
+            '0',
             // 5: check -> string
-                '0',
+            '0',
             // 6: dropdn -> string
-                '0',
+            '0',
             // 7: rating -> number
-                '0',
+            '0',
             // 8: rate -> number
-                '1',
+            '1',
             // 9: date -> string
-                '0'
+            '0'
             // 10: numeric -> number.
         ];
 
         if (!$survey = $DB->get_record(
-                'pimenkoquestionnaire_survey',
-                ['id' => $this->survey->id]
+            'pimenkoquestionnaire_survey',
+            ['id' => $this->survey->id]
         )) {
             print_error(
-                    'surveynotexists',
-                    'pimenkoquestionnaire'
+                'surveynotexists',
+                'pimenkoquestionnaire'
             );
         }
 
         // Get all responses for this survey in one go.
         $allresponsesrs = $this->get_survey_all_responses(
-                $rid,
-                $userid,
-                $currentgroupid,
-                $showincompletes
+            $rid,
+            $userid,
+            $currentgroupid,
+            $showincompletes
         );
 
         // Do we have any questions of type RADIO, DROP, CHECKBOX OR RATE? If so lets get all their choices in one go.
@@ -482,23 +160,23 @@ class exportquestionnaire extends pimenkoquestionnaire {
         $uniquetypes = $this->get_survey_questiontypes();
 
         if (count(
-                        array_intersect(
-                                $choicetypes,
-                                $uniquetypes
-                        )
-                ) > 0) {
+                array_intersect(
+                    $choicetypes,
+                    $uniquetypes
+                )
+            ) > 0) {
             $choiceparams = [$this->survey->id];
 
             $choicesql = "
-                SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content
+                SELECT DISTINCT c.id as cid, q.id as qid, q.precise AS precise, q.name, c.content, c.value
                   FROM {pimenko_question} q
                   JOIN {pimenko_quest_choice} c ON question_id = q.id
                  WHERE q.surveyid = ? ORDER BY cid ASC
             ";
 
             $choicerecords = $DB->get_records_sql(
-                    $choicesql,
-                    $choiceparams
+                $choicesql,
+                $choiceparams
             );
             $choicesbyqid = [];
             if (!empty($choicerecords)) {
@@ -528,14 +206,14 @@ class exportquestionnaire extends pimenkoquestionnaire {
             $col = $question->name;
             $type = $question->type_id;
             if (in_array(
-                    $type,
-                    $choicetypes
+                $type,
+                $choicetypes
             )) {
                 /* single or multiple or rate */
                 if (!isset($choicesbyqid[$qid])) {
                     throw new coding_exception(
-                            'Choice question has no choices!',
-                            'question id ' . $qid . ' of type ' . $type
+                        'Choice question has no choices!',
+                        'question id ' . $qid . ' of type ' . $type
                     );
                 }
                 $choices = $choicesbyqid[$qid];
@@ -587,12 +265,11 @@ class exportquestionnaire extends pimenkoquestionnaire {
                             }
                         }
                         break;
-
                     case QUESRATE: // Rate.
                         foreach ($choices as $choice) {
                             $nameddegrees = 0;
                             $modality = '';
-                            $content = $choice->content;
+                            $content = strip_tags(format_text($choice->content));
                             $osgood = false;
                             if ($choice->precise == 3) {
                                 $osgood = true;
@@ -635,16 +312,16 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 $columns[][$qpos] = $col;
                 $questionidcols[][$qpos] = $qid;
                 array_push(
-                        $types,
-                        $idtocsvmap[$type]
+                    $types,
+                    $idtocsvmap[$type]
                 );
             }
             $num++;
         }
 
         array_push(
-                $output,
-                $columns
+            $output,
+            $columns
         );
 
         $numrespcols = count($output[0]); // Number of columns used for storing question responses.
@@ -674,12 +351,12 @@ class exportquestionnaire extends pimenkoquestionnaire {
             }
             $questionpositions[$qid] = $p;
             if (strpos(
-                            $qid,
-                            '_'
-                    ) !== false) {
+                    $qid,
+                    '_'
+                ) !== false) {
                 $tmparr = explode(
-                        '_',
-                        $qid
+                    '_',
+                    $qid
                 );
                 $questionid = $tmparr[0];
             } else {
@@ -710,15 +387,26 @@ class exportquestionnaire extends pimenkoquestionnaire {
 
             if ($prevresprow !== false && $prevresprow->rid !== $rid) {
                 $output[] = $this->process_csv_row($row, $prevresprow, $currentgroupid, $questionsbyposition,
-                        $nbinfocols, $numrespcols, $showincompletes);
+                    $nbinfocols, $numrespcols, $showincompletes);
                 $row = [];
             }
-
             if ($qtype === QUESRATE || $qtype === QUESCHECK) {
                 $key = $qid . '_' . $responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
-                    $choicetxt = $responserow->rankvalue + 1;
+                    if ($questionobj->has_choices()) {
+                        $choices = $choicesbyqid[$qid];
+                        foreach ($choices as $choice) {
+                            if ($choice->value == ($responserow->rankvalue + 1)) {
+                                $choicetxt = format_string($choice->content);
+                            }
+                        }
+                        if (!isset($choicetxt)) {
+                            $choicetxt = $responserow->rankvalue + 1;
+                        }
+                    } else {
+                        $choicetxt = $responserow->rankvalue + 1;
+                    }
                 } else {
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
                     if (preg_match('/^!other/', $content)) {
@@ -754,7 +442,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                     if (preg_match('/^!other/', $content)) {
                         // If this has an "other" text, use it.
                         $responsetxt = preg_replace(["/^!other=/", "/^!other/"],
-                                ['', get_string('other', 'pimenkoquestionnaire')], $content);
+                            ['', get_string('other', 'pimenkoquestionnaire')], $content);
                         $responsetxt1 = $responserow->response;
                     } else if (($choicecodes == 1) && ($choicetext == 1)) {
                         if ($question->type_id == 11) {
@@ -799,13 +487,13 @@ class exportquestionnaire extends pimenkoquestionnaire {
         if ($prevresprow !== false) {
             // Add final row to output. May not exist if no response data was ever present.
             $output[] = $this->process_csv_row(
-                    $row,
-                    $prevresprow,
-                    $currentgroupid,
-                    $questionsbyposition,
-                    $nbinfocols,
-                    $numrespcols,
-                    $showincompletes
+                $row,
+                $prevresprow,
+                $currentgroupid,
+                $questionsbyposition,
+                $nbinfocols,
+                $numrespcols,
+                $showincompletes
             );
         }
 
@@ -819,28 +507,28 @@ class exportquestionnaire extends pimenkoquestionnaire {
             $thiskey = key($output[0][$i]);
             // Case of unnamed rate single possible answer (full stop char is used for support).
             if (strstr(
-                    $thisoutput,
-                    '->.'
+                $thisoutput,
+                '->.'
             )) {
                 $thisoutput = str_replace(
-                        '->.',
-                        '',
-                        $thisoutput
+                    '->.',
+                    '',
+                    $thisoutput
                 );
             }
             // If variable is not named no separator needed between Question number and potential sub-variables.
             if ($thisoutput == '' || strstr(
-                            $thisoutput,
-                            '->.'
-                    ) || substr(
-                            $thisoutput,
-                            0,
-                            2
-                    ) == '->' || substr(
-                            $thisoutput,
-                            0,
-                            1
-                    ) == '_') {
+                    $thisoutput,
+                    '->.'
+                ) || substr(
+                    $thisoutput,
+                    0,
+                    2
+                ) == '->' || substr(
+                    $thisoutput,
+                    0,
+                    1
+                ) == '_') {
                 $sep = '';
             } else {
                 $sep = '_';
@@ -851,23 +539,348 @@ class exportquestionnaire extends pimenkoquestionnaire {
             }
             // Abbreviated modality name in multiple or rate questions (COLORS->blue=the color of the sky...).
             $pos = strpos(
-                    $thisoutput,
-                    '='
+                $thisoutput,
+                '='
             );
             if ($pos) {
                 $thisoutput = substr(
-                        $thisoutput,
-                        0,
-                        $pos
+                    $thisoutput,
+                    0,
+                    $pos
                 );
             }
             $out = 'Q' . sprintf(
-                            "%02d",
-                            $numquestion
-                    ) . $sep . $thisoutput;
+                    "%02d",
+                    $numquestion
+                ) . $sep . $thisoutput;
             $output[0][$i] = $out;
         }
 
         return $output;
+    }
+
+    /**
+     * Process individual row for csv output
+     *
+     * @param array $row
+     * @param stdClass $resprow resultset row
+     * @param int $currentgroupid
+     * @param array $questionsbyposition
+     * @param int $nbinfocols
+     * @param int $numrespcols
+     * @param int $showincompletes
+     *
+     * @return array
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    final public function process_csv_row(
+        array &$row, stdClass $resprow, $currentgroupid, array &$questionsbyposition, $nbinfocols, $numrespcols,
+        $showincompletes = 0
+    ): array {
+        global $DB;
+
+        static $config = null;
+        // If using an anonymous response, map users to unique user numbers so that number of unique anonymous users can be seen.
+        static $anonumap = [];
+
+        if ($config === null) {
+            $config = get_config(
+                'pimenkoquestionnaire',
+                'downloadoptions'
+            );
+            $replace = 'course,shortname,summary,category,';
+            $find = 'course,';
+            $pos = strpos(
+                $config,
+                'course,'
+            );
+            $config = substr_replace(
+                $config,
+                $replace,
+                $pos,
+                strlen($find)
+            );
+        }
+        $options = empty($config) ? [] : explode(
+            ',',
+            $config
+        );
+
+        if ($showincompletes == 1) {
+            $options[] = 'complete';
+        }
+
+        $positioned = [];
+        $user = new stdClass();
+        foreach ($this->user_fields() as $userfield) {
+            $user->$userfield = $resprow->$userfield;
+        }
+        $user->id = $resprow->userid;
+        $isanonymous = ($this->respondenttype == 'anonymous');
+
+        // Moodle:
+        // Get the course name that this questionnaire belongs to.
+        $ispublic = null;
+
+        $version = get_config('mod_pimenkoquestionnaire', 'version');
+
+        if ($version < '2018050100') {
+            $ispublic = $this->survey->realm == 'public';
+        } else {
+            $ispublic = $this->survey_is_public();
+        }
+        if (!$ispublic) {
+            $courseid = $this->course->id;
+            $coursename = $this->course->fullname;
+            $shortname = $this->course->shortname;
+            $coursesummary = $this->course->summary;
+            $coursecat = $DB->get_record(
+                'course_categories',
+                ['id' => $this->course->category]
+            );
+        } else {
+            // For a public questionnaire, look for the course that used it.
+            $sql = 'SELECT q.id, q.course, c.fullname, c.summary , cc.name as coursecat' . 'FROM {pimenko_response} qr ' .
+                'INNER JOIN {pimenkoquestionnaire} q ON qr.questionnaireid = q.id ' .
+                'INNER JOIN {course} c ON q.course = c.id ' . 'INNER JOIN {course_categories} cc ON c.category = cc.id ' .
+                'WHERE qr.id = ? AND qr.complete = ? ';
+            if ($record = $DB->get_record_sql(
+                $sql,
+                [
+                    $resprow->rid,
+                    'y'
+                ]
+            )) {
+                $courseid = $record->course;
+                $coursename = $record->fullname;
+                $shortname = $record->shortname;
+                $coursesummary = $record->summary;
+                $coursecat = $record->coursecat;
+            } else {
+                $courseid = $this->course->id;
+                $coursename = $this->course->fullname;
+                $shortname = $this->course->shortname;
+                $coursesummary = $this->course->summary;
+                $coursecat = $this->course->coursecat;
+            }
+        }
+
+        $coursecatpath = explode('/', $coursecat->path);
+        if ($coursecatpath[2]) {
+            $coursecatparent = $DB->get_record(
+                'course_categories',
+                ['id' => $coursecatpath[2]]
+            );
+            $coursecat = $coursecatparent->name;
+        } else {
+            $coursecat = $coursecat->name;
+        }
+        // Moodle:
+        // Determine if the user is a member of a group in this course or not.
+        // TODO - review for performance.
+        $groupname = '';
+        if (groups_get_activity_groupmode(
+            $this->cm,
+            $this->course
+        )) {
+            if ($currentgroupid > 0) {
+                $groupname = groups_get_group_name($currentgroupid);
+            } else {
+                if ($user->id) {
+                    if ($groups = groups_get_all_groups(
+                        $courseid,
+                        $user->id
+                    )) {
+                        foreach ($groups as $group) {
+                            $groupname .= $group->name . ', ';
+                        }
+                        $groupname = substr(
+                            $groupname,
+                            0,
+                            strlen($groupname) - 2
+                        );
+                    } else {
+                        $groupname = ' (' . get_string('groupnonmembers') . ')';
+                    }
+                }
+            }
+        }
+
+        $cohortname = "";
+        $sql = "SELECT
+                    GROUP_CONCAT(c.name SEPARATOR ' - ') as cohort
+                FROM {cohort_members} cm
+                INNER JOIN {cohort} c ON cm.cohortid = c.id
+                INNER JOIN {enrol} e ON c.id = e.customint1 AND enrol = 'cohort' AND e.courseid = " . $courseid . "
+                WHERE cm.userid = " . $user->id;
+        $data = $DB->get_record_sql($sql);
+        $cohortname = $data->cohort;
+
+        if ($isanonymous) {
+            if (!isset($anonumap[$user->id])) {
+                $anonumap[$user->id] = count($anonumap) + 1;
+            }
+            $fullname = get_string(
+                    'anonymous',
+                    'pimenkoquestionnaire'
+                ) . $anonumap[$user->id];
+            $username = '';
+            $uid = '';
+        } else {
+            $uid = $user->id;
+            $fullname = fullname($user);
+            $username = $user->username;
+        }
+        if (in_array(
+            'response',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $resprow->rid
+            );
+        }
+        if (in_array(
+            'submitted',
+            $options
+        )) {
+            // For better compabitility & readability with Excel.
+            $submitted = date(
+                get_string(
+                    'strfdateformatcsv',
+                    'pimenkoquestionnaire'
+                ),
+                $resprow->submitted
+            );
+            array_push(
+                $positioned,
+                $submitted
+            );
+        }
+        if (in_array(
+            'institution',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $user->institution
+            );
+        }
+        if (in_array(
+            'department',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $user->department
+            );
+        }
+        if (in_array(
+            'course',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $coursename
+            );
+        }
+        if (in_array(
+            'shortname',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $shortname
+            );
+        }
+        if (in_array(
+            'summary',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $coursesummary
+            );
+        }
+        if (in_array(
+            'category',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $coursecat
+            );
+        }
+        if (in_array(
+            'group',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $groupname
+            );
+        }
+        if (in_array(
+            'cohort',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $cohortname
+            );
+        }
+        if (in_array(
+            'id',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $uid
+            );
+        }
+        if (in_array(
+            'fullname',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $fullname
+            );
+        }
+        if (in_array(
+            'username',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $username
+            );
+        }
+        if (in_array(
+            'complete',
+            $options
+        )) {
+            array_push(
+                $positioned,
+                $resprow->complete
+            );
+        }
+        for ($c = $nbinfocols; $c < $numrespcols; $c++) {
+            if (isset($row[$c])) {
+                $positioned[] = $row[$c];
+            } else if (isset($questionsbyposition[$c])) {
+                $question = $questionsbyposition[$c];
+                $qtype = intval($question->type_id);
+                if ($qtype === QUESCHECK) {
+                    $positioned[] = '0';
+                } else {
+                    $positioned[] = null;
+                }
+            } else {
+                $positioned[] = null;
+            }
+        }
+        return $positioned;
     }
 }
