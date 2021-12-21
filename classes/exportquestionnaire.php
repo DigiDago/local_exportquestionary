@@ -103,7 +103,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 );
                 $types[] = 0;
             } else {
-                $columns[] = format_text($option);
+                $columns[] = format_string($option);
                 $types[] = 1;
             }
         }
@@ -269,7 +269,7 @@ class exportquestionnaire extends pimenkoquestionnaire {
                         foreach ($choices as $choice) {
                             $nameddegrees = 0;
                             $modality = '';
-                            $content = strip_tags(format_text($choice->content));
+                            $content = strip_tags(format_string($choice->content));
                             $osgood = false;
                             if ($choice->precise == 3) {
                                 $osgood = true;

@@ -58,13 +58,14 @@ $PAGE->set_heading(
 );
 
 $PAGE->requires->css('/local/exportquestionary/assets/css/jquery-ui.min.css');
+$PAGE->requires->css('/local/exportquestionary/assets/css/style.css');
 $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/xlsx.js'));
 $PAGE->requires->js(new moodle_url('/local/exportquestionary/assets/js/exportquestionary.js'));
 
 // Get all template questionary
 $templatequestionary = $DB->get_records_sql(
     "SELECT 
-            qs.title 
+            q.name as title 
           FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
           ON qs.id = q.sid 
@@ -74,7 +75,7 @@ $templatequestionary = $DB->get_records_sql(
 $template = [];
 
 foreach ($templatequestionary as $key => $questionary) {
-    $questionary->title = strip_tags(format_text($questionary->title));
+    $questionary->title = strip_tags(format_string($questionary->title));
 }
 
 $template['templatequestionary'] = array_values($templatequestionary);
