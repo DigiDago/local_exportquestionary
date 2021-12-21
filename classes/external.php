@@ -226,7 +226,16 @@ class local_exportquestionary_external extends external_api {
 
         foreach ($questionarys as $questionary) {
             $course = $DB->get_record_sql(
-                "SELECT * FROM {course} c LEFT JOIN {course_categories} cc ON c.category = cc.id WHERE c.id = :id",
+                "SELECT 
+                        c.id, 
+                        c.fullname,
+                        c.shortname,
+                        c.summary, 
+                        cc.name 
+                    FROM {course} c 
+                        LEFT JOIN {course_categories} cc 
+                            ON c.category = cc.id 
+                    WHERE c.id = :id",
                 ["id" => $questionary->course]
             );
             $row = self::generatecsv_row($course, $questionary);
