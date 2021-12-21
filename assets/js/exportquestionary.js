@@ -23,6 +23,7 @@
 require(["core/ajax", "jquery", "jqueryui", "xlsx"], function(ajax, $) {
     $(".datepicker").datepicker();
     $(".exportcsvresponses").on('click', function() {
+        $(".loadercontainer").removeClass('hide');
         ajax.call([
             {
                 methodname: "local_exportquestionary_exportcsvresponses",
@@ -36,13 +37,21 @@ require(["core/ajax", "jquery", "jqueryui", "xlsx"], function(ajax, $) {
                     } else {
                         exportToCsv(response.name, JSON.parse(response.data));
                     }
+                    $(".loadercontainer").addClass('hide');
                 },
                 fail: function(response) {
+                    require(["core/str", "core/notification"], function(str, notification) {
+                        notification.alert(
+                            str.get_strings([{"key" : "error", component : "local_exportquestionary"}]),
+                            response,
+                            str.get_strings([{"key" : "cancel", component : "local_exportquestionary"}]),);
+                    });
                 }
             }
         ], true, true);
     });
     $(".exportcsvreport").on('click', function() {
+        $(".loadercontainer").removeClass('hide');
         let title = $('#templatetitle').val();
         ajax.call([
             {
@@ -57,8 +66,15 @@ require(["core/ajax", "jquery", "jqueryui", "xlsx"], function(ajax, $) {
                     } else {
                         exportToCsv(response.name, JSON.parse(response.data));
                     }
+                    $(".loadercontainer").addClass('hide');
                 },
                 fail: function(response) {
+                    require(["core/str", "core/notification"], function(str, notification) {
+                        notification.alert(
+                            str.get_strings([{"key" : "error", component : "local_exportquestionary"}]),
+                            response,
+                            str.get_strings([{"key" : "cancel", component : "local_exportquestionary"}]),);
+                    });
                 }
             }
         ], true, true);
