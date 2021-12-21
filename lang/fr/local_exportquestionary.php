@@ -24,10 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Export questionary';
-$string['exportall']  = 'Export all questionary';
-$string['responsenumber']  = 'Responses numbers';
-$string['studentnumber']  = 'Student numbers';
-$string['returnnumber']  = 'Return rate';
-$string['error']  = 'Error';
-$string['cancel']  = 'Cancel';
+$string['pluginname'] = 'Export des résultats questionnaires';
+$string['exportall']  = 'Export des résultats questionnaires';
+$string['responsenumber']  = 'Nombre de réponses';
+$string['studentnumber']  = 'Nombre d\'étudiants';
+$string['returnnumber']  = 'Taux de retour';
+$string['error']  = 'Erreur';
+$string['cancel']  = 'Annuler';

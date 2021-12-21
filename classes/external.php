@@ -40,17 +40,17 @@ class local_exportquestionary_external extends external_api {
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function exportcsvresponses( $title ) {
+    public static function exportcsvresponses($title) {
         global $DB;
 
         $params = self::validate_parameters(
-                self::exportcsvresponses_parameters(),
-                [
-                        'title' => $title
-                ]
+            self::exportcsvresponses_parameters(),
+            [
+                'title' => $title
+            ]
         );
 
-        $params['title'] = preg_replace("/[^A-Za-z0-9 ]/", '', $params['title']);
+        $params['title'] = addslashes(preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $params['title']));
 
         // Selected template name.
         $sql = "SELECT
@@ -58,60 +58,60 @@ class local_exportquestionary_external extends external_api {
             FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
-          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name = '%" . $params['title'] . "%' )
+          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name LIKE '%" . $params['title'] . "%' )
           AND qs.realm != 'template' AND q.course != 1";
 
         $questionarys = $DB->get_records_sql(
-                $sql
+            $sql
         );
 
         $csv = [];
         foreach ($questionarys as $questionary) {
             $course = $DB->get_record(
-                    "course",
-                    ["id" => $questionary->course]
+                "course",
+                ["id" => $questionary->course]
             );
             $cm = get_coursemodule_from_instance(
-                    "pimenkoquestionnaire",
-                    $questionary->id,
-                    $course->id
+                "pimenkoquestionnaire",
+                $questionary->id,
+                $course->id
             );
             $questionary = new exportquestionnaire(
-                    0,
-                    $questionary,
-                    $course,
-                    $cm
+                0,
+                $questionary,
+                $course,
+                $cm
             );
 
             if (count($csv) < 1) {
                 $csv = $questionary->generate_csv(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
                 );
                 // Use the questionary name as the file name. Clean it and change any non-filename characters to '_'.
                 $name = "export_questionnaire";
                 $name = preg_replace(
-                        "/[^A-Z0-9]+/i",
-                        "_",
-                        trim($name)
+                    '/[\x00-\x1F\x7F-\xFF]/',
+                    "_",
+                    trim($name)
                 );
             } else {
                 $temp = $questionary->generate_csv(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
                 );
                 array_shift($temp);
                 $csv = array_merge(
-                        $csv,
-                        $temp
+                    $csv,
+                    $temp
                 );
             }
         }
@@ -129,13 +129,13 @@ class local_exportquestionary_external extends external_api {
      */
     public static function exportcsvresponses_parameters() {
         $title = new external_value(
-                PARAM_TEXT,
-                'template title',
-                VALUE_DEFAULT,
-                ''
+            PARAM_TEXT,
+            'template title',
+            VALUE_DEFAULT,
+            ''
         );
         $params = [
-                'title' => $title
+            'title' => $title
         ];
         return new external_function_parameters($params);
     }
@@ -156,14 +156,14 @@ class local_exportquestionary_external extends external_api {
      *
      * @return mixed $data
      */
-    public static function exportcsvreport( $title ) {
+    public static function exportcsvreport($title) {
         global $DB;
 
         $params = self::validate_parameters(
-                self::exportcsvreport_parameters(),
-                [
-                        'title' => $title
-                ]
+            self::exportcsvreport_parameters(),
+            [
+                'title' => $title
+            ]
         );
 
         // Generate CSV header.
@@ -171,26 +171,26 @@ class local_exportquestionary_external extends external_api {
         $output = [];
 
         $options = [
-                'course' => 'course',
-                'shortname' => 'shortname',
-                'summary' => 'summary',
-                'category' => 'category',
-                'responsenumber' => 'responsenumber',
-                'studentnumber' => 'studentnumber',
-                'returnnumber' => 'returnnumber'
+            'course' => 'course',
+            'shortname' => 'shortname',
+            'summary' => 'summary',
+            'category' => 'category',
+            'responsenumber' => 'responsenumber',
+            'studentnumber' => 'studentnumber',
+            'returnnumber' => 'returnnumber'
         ];
         foreach ($options as $key => $option) {
             if (in_array(
-                    $option,
-                    [
-                            'responsenumber',
-                            'studentnumber',
-                            'returnnumber'
-                    ]
+                $option,
+                [
+                    'responsenumber',
+                    'studentnumber',
+                    'returnnumber'
+                ]
             )) {
                 $columns[$key] = get_string(
-                        $option,
-                        'local_exportquestionary'
+                    $option,
+                    'local_exportquestionary'
                 );
             } else {
                 $columns[$key] = get_string($option);
@@ -198,41 +198,41 @@ class local_exportquestionary_external extends external_api {
         }
 
         array_push(
-                $output,
-                $columns
+            $output,
+            $columns
         );
 
         // Generate csv name.
         $name = "export_questionnaire_resume";
         $name = preg_replace(
-                "/[^A-Z0-9]+/i",
-                "_",
-                trim($name)
+            '/[\x00-\x1F\x7F-\xFF]/',
+            "_",
+            trim($name)
         );
 
-        $params['title'] = preg_replace("/[^A-Za-z0-9 ]/", '', $params['title']);
+        $params['title'] = addslashes(preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $params['title']));
 
         // Selected template name.
         $questionarys = $DB->get_records_sql(
-                "SELECT 
+            "SELECT 
             q.id, q.course
           FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
-          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name = '%" . $params['title'] . "%' )
+          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name LIKE '%" . $params['title'] . "%' )
           AND qs.realm != 'template' AND q.course != 1
           GROUP BY q.course, q.id"
         );
 
         foreach ($questionarys as $questionary) {
-            $course = $DB->get_record(
-                    "course",
-                    ["id" => $questionary->course]
+            $course = $DB->get_record_sql(
+                "SELECT * FROM {course} c LEFT JOIN {course_categories} cc ON c.category = cc.id WHERE c.id = :id",
+                ["id" => $questionary->course]
             );
             $row = self::generatecsv_row($course, $questionary);
             array_push(
-                    $output,
-                    $row
+                $output,
+                $row
             );
         }
 
@@ -249,18 +249,18 @@ class local_exportquestionary_external extends external_api {
      */
     public static function exportcsvreport_parameters() {
         $title = new external_value(
-                PARAM_TEXT,
-                'template title',
-                VALUE_DEFAULT,
-                ''
+            PARAM_TEXT,
+            'template title',
+            VALUE_DEFAULT,
+            ''
         );
         $params = [
-                'title' => $title
+            'title' => $title
         ];
         return new external_function_parameters($params);
     }
 
-    public static function generatecsv_row( $course, $questionary ) {
+    public static function generatecsv_row($course, $questionary) {
         global $DB;
         // ['course', 'shortname', 'summary', 'category', 'responsenumber', 'studentnumber', 'returnnumber']
 
@@ -287,14 +287,15 @@ class local_exportquestionary_external extends external_api {
         } else {
             $returnnumber = 0;
         }
+
         $row = [
-                'course' => $course->fullname,
-                'shortname' => $course->shortname,
-                'summary' => $course->summary,
-                'category' => $course->coursecat,
-                'responsenumber' => $data->responsenumber,
-                'studentnumber' => $data->user_enrol,
-                'returnnumber' => $returnnumber
+            'course' => $course->fullname,
+            'shortname' => $course->shortname,
+            'summary' => $course->summary,
+            'category' => $course->name,
+            'responsenumber' => $data->responsenumber,
+            'studentnumber' => $data->user_enrol,
+            'returnnumber' => $returnnumber
         ];
         return $row;
     }
