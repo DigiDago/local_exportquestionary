@@ -394,19 +394,9 @@ class exportquestionnaire extends pimenkoquestionnaire {
                 $key = $qid . '_' . $responserow->choice_id;
                 $position = $questionpositions[$key];
                 if ($qtype === QUESRATE) {
-                    if ($questionobj->has_choices()) {
-                        $choices = $choicesbyqid[$qid];
-                        foreach ($choices as $choice) {
-                            if ($choice->value == ($responserow->rankvalue + 1)) {
-                                $choicetxt = format_string($choice->content);
-                            }
-                        }
-                        if (!isset($choicetxt)) {
-                            $choicetxt = $responserow->rankvalue + 1;
-                        }
-                    } else {
-                        $choicetxt = $responserow->rankvalue + 1;
-                    }
+                    // Can't get choice value.
+                    // For no reason in tab scale value is save as 1,2,3,4,5,6.
+                    $choicetxt = $responserow->rankvalue + 1;
                 } else {
                     $content = $choicesbyqid[$qid][$responserow->choice_id]->content;
                     if (preg_match('/^!other/', $content)) {
