@@ -53,16 +53,16 @@ class local_exportquestionary_external extends external_api {
         $params['title'] = addslashes(preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $params['title']));
 
         // Selected template name.
-        $sql = "SELECT
+        $sql = 'SELECT
             *
             FROM {pimenkoquestionnaire_survey} qs 
           LEFT JOIN {pimenkoquestionnaire} q 
             ON qs.id = q.sid
-          WHERE ( qs.title LIKE '%" . $params['title'] . "%' OR q.name LIKE '%" . $params['title'] . "%' )
-          AND qs.realm != 'template' AND q.course != 1";
+          WHERE ( qs.title LIKE :title1 OR q.name LIKE :title2 )
+          AND qs.realm != "template" AND q.course != 1';
 
         $questionarys = $DB->get_records_sql(
-            $sql
+            $sql, ['title1' => "%".$params['title']."%", 'title2' => "%".$params['title']."%"]
         );
 
         $csv = [];
